@@ -1,0 +1,31 @@
+{
+  "name": "nand",
+  "description": "The universal building block of everything",
+  "version": "0.0.1",
+  "keywords": [
+    "nodejs",
+    "building",
+    "block"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codeofnode/nand.git"
+  },
+  "homepage": "https://github.com/codeofnode/nand",
+  "bugs": {
+    "url": "https://github.com/codeofnode/nand/issues"
+  },
+  "scripts": {
+    "test": "node test"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://www.opensource.org/licenses/MIT"
+    }
+  ],
+  "author": {
+    "name": "Ramesh Kumar",
+    "email": "codeofnode@gmail.com"
+  }
+}
