@@ -1,6 +1,6 @@
 'use strict';
 
-let CONFIG = {}, PACKAGE = {}, DATA = '';
+var CONFIG = {}, PACKAGE = {}, DATA = '';
 let EVAL_OPTIONS = new Map();
 
 const path = require('path');
