@@ -33,4 +33,4 @@ isEqual(obj.read('ROOT'), 'hello world');
 isEqual(obj.write('ROOT','39','(function(){ return true; })()'), true);
 isEqual(obj.fire('ROOT', '39', 'eval'), true);
 
-console.log('!!!-----SUCCESS-----!!!')
+console.log('!!!-----SUCCESS-----!!!');

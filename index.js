@@ -17,8 +17,8 @@ try { Object.assign(PACKAGE, require(path.join(__dirname,'package.json'))); } ca
 
 Object.assign(CONFIG, Object.keys(process.env).filter(key => (key.indexOf(CONFIG.ENV_PREFIX) === 0)).
   reduce(function(pv,cv){
-    let val = process.env[cv];
-    pv[cv.substring(CONFIG.ENV_PREFIX.length)] = (process.env[CONFIG.ENV_PARSE_PREFIX+cv]==='1') ? JSON.parse(val) : val;
+    let val = process.env[cv], key = cv.substring(CONFIG.ENV_PREFIX.length);
+    pv[key] = (process.env[CONFIG.ENV_PARSE_PREFIX+key]==='1') ? JSON.parse(val) : val;
     return pv;
   }, {}));
 
