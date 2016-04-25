@@ -20,4 +20,17 @@ isEqual(obj.parentId, 'ROOT');
 isEqual(obj.parentGroup, 'ROOT');
 isEqual(obj.permission, [7,0,0]);
 
+isEqual(obj.read(), undefined);
+isEqual(obj.read('ROOT'), '');
+isEqual(obj.read('3'), undefined);
+
+isEqual(obj.write('ROOT','39','hello world'), true);
+isEqual(obj.read('ROOT'), 'hello world');
+
+isEqual(obj.write('RT','39','hd'), undefined);
+isEqual(obj.read('ROOT'), 'hello world');
+
+isEqual(obj.write('ROOT','39','(function(){ return true; })()'), true);
+isEqual(obj.fire('ROOT', '39', 'eval'), true);
+
 console.log('!!!-----SUCCESS-----!!!')

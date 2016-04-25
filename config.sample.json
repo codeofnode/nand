@@ -3,6 +3,7 @@
   "ENV_PREFIX": "APP_",
   "INS_PREFIX": "_",
   "DB_GRP_PREFIX": "DB_GRP_",
+  "EVAL_OPTIONS": "eval,JSON.parse",
   "DEFAULT_PERMISSION": "700",
   "ENV_PARSE_PREFIX": "PARSE_"
 }

@@ -1,6 +1,7 @@
 'use strict';
 
-var CONFIG = {}, PACKAGE = {}, DATA = '';
+let CONFIG = {}, PACKAGE = {}, DATA = '';
+let EVAL_OPTIONS = new Map();
 
 const path = require('path');
 
@@ -16,7 +17,7 @@ try { Object.assign(PACKAGE, require(path.join(__dirname,'package.json'))); } ca
 
 Object.assign(CONFIG, Object.keys(process.env).filter(key => (key.indexOf(CONFIG.ENV_PREFIX) === 0)).
   reduce(function(pv,cv){
-    var val = process.env[cv];
+    let val = process.env[cv];
     pv[cv.substring(CONFIG.ENV_PREFIX.length)] = (process.env[CONFIG.ENV_PARSE_PREFIX+cv]==='1') ? JSON.parse(val) : val;
     return pv;
   }, {}));
@@ -26,8 +27,14 @@ try { Object.assign(CONFIG, require(path.join(__dirname,CONFIG.ENV+'.json'))); }
 if(typeof CONFIG.INS_PREFIX !== 'string'){ CONFIG.INS_PREFIX = '_'; }
 if(typeof CONFIG.DB_GRP_PREFIX !== 'string'){ CONFIG.DB_GRP_PREFIX = 'DB_GRP_'; }
 if(typeof CONFIG.DEFAULT_PERMISSION !== 'string'){ CONFIG.DEFAULT_PERMISSION = '700'; }
+if(typeof CONFIG.EVAL_OPTIONS !== 'string'){ CONFIG.EVAL_OPTIONS = 'eval'; }
 
-var ifNotString = str => Boolean(!(typeof str === 'string' && str.length));
+let splits = CONFIG.EVAL_OPTIONS.split(',');
+for(let v of splits){
+  EVAL_OPTIONS.set(v,eval(v));
+}
+
+let ifNotString = str => Boolean(!(typeof str === 'string' && str.length));
 
 function warn(msg){
   if(CONFIG.DEBUG === '1'){
@@ -44,7 +51,7 @@ Object.freeze(CONFIG);
 Object.freeze(PACKAGE);
 
 function getPermission(nm){
-  var nm = parseInt(nm);
+  nm = parseInt(nm);
   if(nm >=0 && nm <= 7){
     return nm;
   } else {
@@ -53,10 +60,10 @@ function getPermission(nm){
   }
 }
 
-var canRead = num => Boolean(num > 3);
-var canWrite = num => Boolean(num === 2 || num === 3 || num === 6 || num === 7);
-var canExecute = num => Boolean(num === 1 || num === 3 || num === 5 || num === 7);
-var whoIs = (u,g,_u,_g) => ((u === _u) ? 0 : ((g === _g)  ? 1 : 2 ));
+let canRead = num => Boolean(num > 3),
+  canWrite = num => Boolean(num === 2 || num === 3 || num === 6 || num === 7),
+  canExecute = num => Boolean(num === 1 || num === 3 || num === 5 || num === 7),
+  whoIs = (u,g,_u,_g) => ((u === _u) ? 0 : ((g === _g)  ? 1 : 2 ));
 
 class nand {
   constructor(parentId,parentGroup,groupId,permission,dbRecord){
@@ -100,22 +107,26 @@ class nand {
     this.permission[2] = getPermission(permission[2]);
   }
   read(user,group){
-    if(this.db && typeof this.db.read === 'function' && canRead(this.permission[whoIs(user,group,this.id,this.group)])){
+    if(this.db && typeof this.db.read === 'function' &&
+        canRead(this.permission[whoIs(user,group,this.parentId,this.parentGroup)])){
       return this.db.read(user,group);
     } else {
       return undefined;
     }
   }
   write(user,group,data){
-    if(this.db && typeof this.db.write === 'function' && data !== undefined && canWrite(this.permission[whoIs(user,group,this.id,this.group)])){
+    if(this.db && typeof this.db.write === 'function' && data !== undefined &&
+        canWrite(this.permission[whoIs(user,group,this.parentId,this.parentGroup)])){
       return this.db.write(user,group,data);
     } else {
       return undefined;
     }
   }
-  fire(user,group,exec){
-    if(this.db && typeof this.db.read === 'function' && typeof exec === 'function' && canExecute(this.permission[whoIs(user,group,this.id,this.group)])){
-      return exec(this.read(this.id,this.group,data));
+  fire(user,group,ex){
+    ex = EVAL_OPTIONS.get(ex);
+    if(this.db && typeof this.db.read === 'function' && typeof ex === 'function' &&
+        canExecute(this.permission[whoIs(user,group,this.parentId,this.parentGroup)])){
+      return ex(this.read(user,group));
     } else {
       return undefined;
     }
