@@ -1,7 +1,7 @@
 'use strict';
 
 var CONFIG = {}, PACKAGE = {}, DATA = '';
-let EVAL_OPTIONS = new Map();
+var EVAL_OPTIONS = new Map();
 
 const path = require('path');
 
@@ -29,12 +29,12 @@ if(typeof CONFIG.DB_GRP_PREFIX !== 'string'){ CONFIG.DB_GRP_PREFIX = 'DB_GRP_'; 
 if(typeof CONFIG.DEFAULT_PERMISSION !== 'string'){ CONFIG.DEFAULT_PERMISSION = '700'; }
 if(typeof CONFIG.EVAL_OPTIONS !== 'string'){ CONFIG.EVAL_OPTIONS = 'eval'; }
 
-let splits = CONFIG.EVAL_OPTIONS.split(',');
+var splits = CONFIG.EVAL_OPTIONS.split(',');
 for(let v of splits){
   EVAL_OPTIONS.set(v,eval(v));
 }
 
-let ifNotString = str => Boolean(!(typeof str === 'string' && str.length));
+var ifNotString = str => Boolean(!(typeof str === 'string' && str.length));
 
 function warn(msg){
   if(CONFIG.DEBUG === '1'){
@@ -60,7 +60,7 @@ function getPermission(nm){
   }
 }
 
-let canRead = num => Boolean(num > 3),
+var canRead = num => Boolean(num > 3),
   canWrite = num => Boolean(num === 2 || num === 3 || num === 6 || num === 7),
   canExecute = num => Boolean(num === 1 || num === 3 || num === 5 || num === 7),
   whoIs = (u,g,_u,_g) => ((u === _u) ? 0 : ((g === _g)  ? 1 : 2 ));
