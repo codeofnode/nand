@@ -2,15 +2,17 @@
 
 var CONFIG = {}, PACKAGE = {}, DATA = '';
 
+const path = require('path');
+
 if(CONFIG.ENV !== 'test' && CONFIG.ENV !== 'prod'){ CONFIG.ENV = 'dev'; }
 if(typeof CONFIG.ENV_PREFIX !== 'string'){ CONFIG.ENV_PREFIX = 'APP_'; }
 if(typeof CONFIG.ENV_PARSE_PREFIX !== 'string'){ CONFIG.ENV_PARSE_PREFIX = 'PARSE_'; }
 
-try { CONFIG = require('config.sample.json'); } catch(er){ }
+try { CONFIG = require(path.join(__dirname,'config.sample.json')); } catch(er){ }
 
-try { Object.assign(CONFIG, require('config.json')); } catch(er){ }
+try { Object.assign(CONFIG, require(path.join(__dirname,'config.json'))); } catch(er){ }
 
-try { Object.assign(PACKAGE, require('package.json')); } catch(er){ }
+try { Object.assign(PACKAGE, require(path.join(__dirname,'package.json'))); } catch(er){ }
 
 Object.assign(CONFIG, Object.keys(process.env).filter(key => (key.indexOf(CONFIG.ENV_PREFIX) === 0)).
   reduce(function(pv,cv){
@@ -19,9 +21,10 @@ Object.assign(CONFIG, Object.keys(process.env).filter(key => (key.indexOf(CONFIG
     return pv;
   }, {}));
 
-try { Object.assign(CONFIG, require(CONFIG.ENV+'.json')); } catch(er){ }
+try { Object.assign(CONFIG, require(path.join(__dirname,CONFIG.ENV+'.json'))); } catch(er){ }
 
 if(typeof CONFIG.INS_PREFIX !== 'string'){ CONFIG.INS_PREFIX = '_'; }
+if(typeof CONFIG.DB_GRP_PREFIX !== 'string'){ CONFIG.DB_GRP_PREFIX = 'DB_GRP_'; }
 if(typeof CONFIG.DEFAULT_PERMISSION !== 'string'){ CONFIG.DEFAULT_PERMISSION = '700'; }
 
 var ifNotString = str => Boolean(!(typeof str === 'string' && str.length));
@@ -40,7 +43,7 @@ if(ifNotString(PACKAGE.name)){
 Object.freeze(CONFIG);
 Object.freeze(PACKAGE);
 
-function getPermission(num){
+function getPermission(nm){
   var nm = parseInt(nm);
   if(nm >=0 && nm <= 7){
     return nm;
@@ -72,8 +75,7 @@ class nand {
     if(ifNotString(permission)){
       warn('Permission entry must be a string. Taken default 700');
       permission = '700';
-    }
-    if(permission.length !== 3){
+    } else if(permission.length !== 3){
       warn('Permission string must be of length 3. Taken no permission "000".');
       permission = '000';
     }
@@ -82,7 +84,7 @@ class nand {
       dbRecord = Db;
     }
     if(dbRecord){
-      this.db = new dbRecord(parentId,parentGroup,CONFIG.INS_PREFIX+groupId);
+      this.db = new dbRecord(parentId,parentGroup,CONFIG.DB_GRP_PREFIX+groupId);
       this.id = CONFIG.INS_PREFIX+this.db.id;
     }
     if(ifNotString(this.id)){

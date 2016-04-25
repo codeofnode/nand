@@ -2,7 +2,7 @@
   "ENV":"dev",
   "ENV_PREFIX": "APP_",
   "INS_PREFIX": "_",
-  "DEBUG": "1",
+  "DB_GRP_PREFIX": "DB_GRP_",
   "DEFAULT_PERMISSION": "700",
   "ENV_PARSE_PREFIX": "PARSE_"
 }
