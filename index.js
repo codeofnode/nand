@@ -24,9 +24,6 @@ try { Object.assign(CONFIG, require(CONFIG.ENV+'.json')); } catch(er){ }
 if(typeof CONFIG.INS_PREFIX !== 'string'){ CONFIG.INS_PREFIX = '_'; }
 if(typeof CONFIG.DEFAULT_PERMISSION !== 'string'){ CONFIG.DEFAULT_PERMISSION = '700'; }
 
-Object.freeze(CONFIG);
-Object.freeze(PACKAGE);
-
 var ifNotString = str => Boolean(!(typeof str === 'string' && str.length));
 
 function warn(msg){
@@ -34,6 +31,14 @@ function warn(msg){
     console.log('WARNING : '+msg);
   }
 }
+
+if(ifNotString(PACKAGE.name)){
+  warn('Id could not be gernerated for module.');
+  PACKAGE.name = 'ROOT_CHILD';
+}
+
+Object.freeze(CONFIG);
+Object.freeze(PACKAGE);
 
 function getPermission(num){
   var nm = parseInt(nm);
@@ -50,13 +55,8 @@ var canWrite = num => Boolean(num === 2 || num === 3 || num === 6 || num === 7);
 var canExecute = num => Boolean(num === 1 || num === 3 || num === 5 || num === 7);
 var whoIs = (u,g,_u,_g) => ((u === _u) ? 0 : ((g === _g)  ? 1 : 2 ));
 
-if(ifNotString(PACKAGE.name)){
-  warn('Id could not be gernerated for module.');
-  PACKAGE.name = 'ROOT_CHILD';
-}
-
-exports = class {
-  constructor(parentId,parentGroup,groupId,permission='700',dbRecord){
+class nand {
+  constructor(parentId,parentGroup,groupId,permission,dbRecord){
     if(ifNotString(parentId)){
       warn('Parent id must be a string.');
       parentId = 'ROOT';
@@ -70,11 +70,11 @@ exports = class {
       groupId = PACKAGE.name;
     }
     if(ifNotString(permission)){
-      warn('Permission entry must be a string.');
-      permission = '000';
+      warn('Permission entry must be a string. Taken default 700');
+      permission = '700';
     }
     if(permission.length !== 3){
-      warn('Permission string must be of length 3.');
+      warn('Permission string must be of length 3. Taken no permission "000".');
       permission = '000';
     }
     this.group = groupId;
@@ -120,7 +120,7 @@ exports = class {
   }
 }
 
-class Db {
+class Db extends nand {
   constructor(parentId,parentGroup,groupId){
     super(parentId,parentGroup,groupId,'700',false);
     this.id = PACKAGE.name;
@@ -137,3 +137,5 @@ class Db {
     }
   }
 }
+
+module.exports = nand;
