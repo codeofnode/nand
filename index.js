@@ -1,15 +1,14 @@
 'use strict';
 
 var CONFIG = {
-  "INS_PREFIX": "_",
-  "DB_GRP_PREFIX": "DB_GRP_",
+  "DB_PREFIX": "_",
+  "DB_GRP_PREFIX": "_",
   "EVAL_OPTIONS": "eval,JSON.parse",
   "_PERMISSION": "700",
-  "_GROUP": "group1",
-  "_ID": "id1",
-  "_UID": "uid1",
-  "_GID": "gid1",
-  "_DB_ID": "db1"
+  "_GROUP": "home",
+  "_ID": "index",
+  "_UID": "root",
+  "_GID": "root"
 }, DATA = '', EVAL_OPTIONS = new Map();
 
 const path = require('path');
@@ -52,7 +51,7 @@ var canRead = num => Boolean(num > 3),
   whoIs = (u,g,_u,_g) => ((u === _u) ? 0 : ((g === _g)  ? 1 : 2 ));
 
 class nand {
-  constructor(parentId,parentGroup,groupId,permission,dbRecord){
+  constructor(parentId,parentGroup,group,id,permission,dbRecord){
     if(ifNotString(parentId)){
       warn('Parent id must be a string.');
       parentId = CONFIG._UID;
@@ -61,32 +60,33 @@ class nand {
       warn('Parent Group must be a string.');
       parentGroup = CONFIG._GID;
     }
-    if(ifNotString(groupId)){
+    if(ifNotString(group)){
       warn('Group id must be a string.');
-      groupId = CONFIG._GROUP;
+      group = CONFIG._GROUP;
+    }
+    if(ifNotString(id)){
+      warn('id parameter not found..!');
+      id = CONFIG._ID;
     }
     if(typeof permission !== 'string' || permission.length !== 3){
       warn('Permission entry must be a string of length 3. Taken default '+CONFIG._PERMISSION);
       permission = CONFIG._PERMISSION;
     }
-    this.group = groupId;
     if(dbRecord === undefined){
       dbRecord = Db;
     }
     if(dbRecord){
-      this.db = new dbRecord(parentId,parentGroup,CONFIG.DB_GRP_PREFIX+groupId);
-      this.id = CONFIG.INS_PREFIX+this.db.id;
+      this.db = new dbRecord(parentId,parentGroup,CONFIG.DB_GRP_PREFIX+group,CONFIG.DB_PREFIX+id);
     }
-    if(ifNotString(this.id)){
-      this.id = CONFIG._ID;
-    }
-    this.version = CONFIG.version;
     this.parentId = parentId;
     this.parentGroup = parentGroup;
+    this.group = group;
+    this.id = id;
     this.permission = new Array(3);
     this.permission[0] = getPermission(permission[0]);
     this.permission[1] = getPermission(permission[1]);
     this.permission[2] = getPermission(permission[2]);
+    this.version = CONFIG.version;
   }
   read(user,group){
     if(this.db && typeof this.db.read === 'function' &&
@@ -97,7 +97,7 @@ class nand {
     }
   }
   write(user,group,data){
-    if(this.db && typeof this.db.write === 'function' && data !== undefined &&
+    if(this.db && typeof this.db.write === 'function' && typeof data === 'string' &&
         canWrite(this.permission[whoIs(user,group,this.parentId,this.parentGroup)])){
       return this.db.write(user,group,data);
     } else {
@@ -124,9 +124,8 @@ class nand {
 }
 
 class Db extends nand {
-  constructor(parentId,parentGroup,groupId){
-    super(parentId,parentGroup,groupId,'700',false);
-    this.id = CONFIG._DB_ID;
+  constructor(parentId,parentGroup,group,id){
+    super(parentId,parentGroup,group,id,'700',false);
   }
   read(user,group){
     return ((this.parentId === user) ? DATA : undefined);
