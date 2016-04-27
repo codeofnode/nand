@@ -1,38 +1,32 @@
 'use strict';
 
-var CONFIG = {}, PACKAGE = {}, DATA = '';
-var EVAL_OPTIONS = new Map();
+var CONFIG = {
+  "INS_PREFIX": "_",
+  "DB_GRP_PREFIX": "DB_GRP_",
+  "EVAL_OPTIONS": "eval,JSON.parse",
+  "_PERMISSION": "700",
+  "_GROUP": "group1",
+  "_ID": "id1",
+  "_UID": "uid1",
+  "_GID": "gid1",
+  "_DB_ID": "db1"
+}, DATA = '', EVAL_OPTIONS = new Map();
 
 const path = require('path');
 
-if(CONFIG.ENV !== 'test' && CONFIG.ENV !== 'prod'){ CONFIG.ENV = 'dev'; }
-if(typeof CONFIG.ENV_PREFIX !== 'string'){ CONFIG.ENV_PREFIX = 'APP_'; }
-if(typeof CONFIG.ENV_PARSE_PREFIX !== 'string'){ CONFIG.ENV_PARSE_PREFIX = 'PARSE_'; }
-
-try { CONFIG = require(path.join(__dirname,'config.sample.json')); } catch(er){ }
-
-try { Object.assign(CONFIG, require(path.join(__dirname,'config.json'))); } catch(er){ }
-
-try { Object.assign(PACKAGE, require(path.join(__dirname,'package.json'))); } catch(er){ }
-
-Object.assign(CONFIG, Object.keys(process.env).filter(key => (key.indexOf(CONFIG.ENV_PREFIX) === 0)).
-  reduce(function(pv,cv){
-    let val = process.env[cv], key = cv.substring(CONFIG.ENV_PREFIX.length);
-    pv[key] = (process.env[CONFIG.ENV_PARSE_PREFIX+key]==='1') ? JSON.parse(val) : val;
-    return pv;
-  }, {}));
-
-try { Object.assign(CONFIG, require(path.join(__dirname,CONFIG.ENV+'.json'))); } catch(er){ }
-
-if(typeof CONFIG.INS_PREFIX !== 'string'){ CONFIG.INS_PREFIX = '_'; }
-if(typeof CONFIG.DB_GRP_PREFIX !== 'string'){ CONFIG.DB_GRP_PREFIX = 'DB_GRP_'; }
-if(typeof CONFIG.DEFAULT_PERMISSION !== 'string'){ CONFIG.DEFAULT_PERMISSION = '700'; }
-if(typeof CONFIG.EVAL_OPTIONS !== 'string'){ CONFIG.EVAL_OPTIONS = 'eval'; }
-
-var splits = CONFIG.EVAL_OPTIONS.split(',');
-for(let v of splits){
-  EVAL_OPTIONS.set(v,eval(v));
+function setEvals(){
+  EVAL_OPTIONS.clear();
+  if(typeof CONFIG.EVAL_OPTIONS === 'string'){
+    var splits = CONFIG.EVAL_OPTIONS.split(',');
+    for(let v of splits){
+      if(v.length){
+        EVAL_OPTIONS.set(v,eval(v));
+      }
+    }
+  }
 }
+
+setEvals();
 
 var ifNotString = str => Boolean(!(typeof str === 'string' && str.length));
 
@@ -41,14 +35,6 @@ function warn(msg){
     console.log('WARNING : '+msg);
   }
 }
-
-if(ifNotString(PACKAGE.name)){
-  warn('Id could not be gernerated for module.');
-  PACKAGE.name = 'ROOT_CHILD';
-}
-
-Object.freeze(CONFIG);
-Object.freeze(PACKAGE);
 
 function getPermission(nm){
   nm = parseInt(nm);
@@ -69,22 +55,19 @@ class nand {
   constructor(parentId,parentGroup,groupId,permission,dbRecord){
     if(ifNotString(parentId)){
       warn('Parent id must be a string.');
-      parentId = 'ROOT';
+      parentId = CONFIG._UID;
     }
     if(ifNotString(parentGroup)){
       warn('Parent Group must be a string.');
-      parentGroup = 'ROOT';
+      parentGroup = CONFIG._GID;
     }
     if(ifNotString(groupId)){
       warn('Group id must be a string.');
-      groupId = PACKAGE.name;
+      groupId = CONFIG._GROUP;
     }
-    if(ifNotString(permission)){
-      warn('Permission entry must be a string. Taken default 700');
-      permission = '700';
-    } else if(permission.length !== 3){
-      warn('Permission string must be of length 3. Taken no permission "000".');
-      permission = '000';
+    if(typeof permission !== 'string' || permission.length !== 3){
+      warn('Permission entry must be a string of length 3. Taken default '+CONFIG._PERMISSION);
+      permission = CONFIG._PERMISSION;
     }
     this.group = groupId;
     if(dbRecord === undefined){
@@ -95,10 +78,9 @@ class nand {
       this.id = CONFIG.INS_PREFIX+this.db.id;
     }
     if(ifNotString(this.id)){
-      this.id = PACKAGE.name;
+      this.id = CONFIG._ID;
     }
-    this.version = PACKAGE.version;
-    this.description = PACKAGE.description;
+    this.version = CONFIG.version;
     this.parentId = parentId;
     this.parentGroup = parentGroup;
     this.permission = new Array(3);
@@ -122,7 +104,7 @@ class nand {
       return undefined;
     }
   }
-  fire(user,group,ex){
+  exec(user,group,ex){
     ex = EVAL_OPTIONS.get(ex);
     if(this.db && typeof this.db.read === 'function' && typeof ex === 'function' &&
         canExecute(this.permission[whoIs(user,group,this.parentId,this.parentGroup)])){
@@ -131,12 +113,20 @@ class nand {
       return undefined;
     }
   }
+  static init(config){
+    if(typeof config === 'object' && config){
+      Object.assign(CONFIG, Object.keys(config).filter((val) => !(ifNotString(config[val]))).reduce(function(pv,cv){ pv[cv] = config[cv]; return pv; }, {}));
+      if(typeof config.EVAL_OPTIONS === 'string'){
+        setEvals();
+      }
+    }
+  }
 }
 
 class Db extends nand {
   constructor(parentId,parentGroup,groupId){
     super(parentId,parentGroup,groupId,'700',false);
-    this.id = PACKAGE.name;
+    this.id = CONFIG._DB_ID;
   }
   read(user,group){
     return ((this.parentId === user) ? DATA : undefined);
